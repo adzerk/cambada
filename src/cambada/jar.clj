@@ -30,7 +30,10 @@
             :default "1.0.0-SNAPSHOT"]
 
            [nil "--[no-]copy-source" "Copy source files by default"
-            :default true]]
+            :default true]
+
+           ["-p" "--extra-paths STRING" "extra-paths"
+            :parse-fn #(when % (string/split % #":"))]]
 
           compile/cli-options))
 
@@ -160,9 +163,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- filespecs [{{:keys [paths extra-paths]} :deps-map
-                   :keys [out copy-source] :as task}]
+                   :keys [out copy-source] :as task
+                   extra-extra-paths :extra-paths}]
+  (cli/info "extra-paths" extra-extra-paths)
   (concat [{:type :path :path (utils/compiled-classes-path out)}
-           {:type :paths :paths extra-paths}]
+           {:type :paths :paths extra-paths}
+           {:type :paths :paths extra-extra-paths}]
           (if copy-source
             [{:type :paths
               :paths paths}])))

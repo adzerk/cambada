@@ -25,8 +25,9 @@
          flatten)
     aot))
 
-(defn apply! [{:keys [deps-map out] :as task}]
-  (clean/apply! task)
+(defn apply! [{:keys [deps-map out] dirty-build :dirty-build :as task}]
+  (when-not dirty-build
+    (clean/apply! task))
   (let [target (utils/compiled-classes-path out)
         aot-ns (aot-namespaces task)]
     (utils/mkdirs target)

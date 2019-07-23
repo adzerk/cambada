@@ -256,8 +256,11 @@
                   (replace-header task)))]
     (spit pom-file (xml/indent-str pom))))
 
-(defn apply! [{:keys [deps-map] :as task}]
-  (compile/apply! task)
+(defn apply! [{:keys [deps-map]
+               skip-complie :skip-compile
+               :as task}]
+  (when-not skip-complie
+      (compile/apply! task))
   (let [jar-file (jar-utils/get-jar-filename task)]
     (cli/info "Creating" jar-file)
     (sync-pom task)

@@ -8,13 +8,15 @@
             [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.pprint :as pprint]
-            [clojure.tools.deps.alpha :as tools.deps])
+            [clojure.tools.deps.alpha :as tools.deps]
+            [clojure.string :as str])
   (:import [java.io BufferedOutputStream FileOutputStream ByteArrayInputStream]
            [java.nio.file Files Paths Path]
            [java.util.jar Manifest JarEntry JarOutputStream]
            [java.util.regex Pattern]
            [java.util.zip ZipFile ZipOutputStream ZipEntry]
            [org.apache.commons.io.output CloseShieldOutputStream]))
+
 
 (def cli-options jar/cli-options)
 
@@ -178,8 +180,8 @@
 (defn apply! [{:keys [deps deps-map out] :as task}]
   (jar/apply! task)
   (let [filename (jar-utils/get-jar-filename task {:kind :uberjar})
-        {mvn-paths :mvn deps-paths :deps} (get-deps-by-manifest task)
-        jars (cons (jar-utils/get-jar-filename task {:kind :jar}) mvn-paths)]
+        {mvn-paths :mvn deps-paths :deps jar :jar} (get-deps-by-manifest task)
+        jars (into (or jar []) (cons (jar-utils/get-jar-filename task {:kind :jar}) mvn-paths))]
     (cli/info "Creating" filename)
     (with-open [out (-> filename
                         (FileOutputStream.)

@@ -2,7 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.tools.cli :as cli]
-            [clojure.tools.deps.alpha.reader :as deps.reader]))
+            [clojure.tools.deps.alpha :as tools.deps]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Console out and operating functions
@@ -58,26 +58,26 @@
   [args cli-options]
   (cli/parse-opts args cli-options))
 
-(defn ^:private config-files
-  "Read clojure env to get config files and append deps if not already present.
-   Returns a vector of strings which represent the config files"
-  [deps]
-  (let [{:keys [config-files]} (deps.reader/clojure-env)]
-    (cond-> config-files
-      (not= deps (last config-files)) (conj deps))))
+;; (defn ^:private config-files
+;;   "Read clojure env to get config files and append deps if not already present.
+;;    Returns a vector of strings which represent the config files"
+;;   [deps]
+;;   (let [{:keys [config-files]} (deps.reader/clojure-env)]
+;;     (cond-> config-files
+;;       (not= deps (last config-files)) (conj deps))))
 
-(defn ^:private cli-options->deps-map
-  [{:keys [deps merge-config] :as opts}]
-  (let [all-files (config-files deps)]
-    (if merge-config
-      (deps.reader/read-deps all-files)
-      (-> deps io/file deps.reader/slurp-deps))))
+;; (defn ^:private cli-options->deps-map
+;;   [{:keys [deps merge-config] :as opts}]
+;;   (let [all-files (config-files deps)]
+;;     (if merge-config
+;;       (deps.reader/read-deps all-files)
+;;       (-> deps io/file deps.reader/slurp-deps))))
 
 (defn ^:private parsed-opts->task
   [{{:keys [deps main aot] :as options} :options
     :keys [summary errors]}]
   (try
-    (let [deps-map (cli-options->deps-map options)
+    (let [basis (tools.deps/create-basis {})
           opts (cond-> options
                  ;; if main is not nil, it needs to be added to aot
                  ;; unless user chose all or main has been added
@@ -89,7 +89,8 @@
       (-> {:parser {:summary summary
                     :errors errors}}
           (merge opts)
-          (assoc :deps-map deps-map)))
+          (assoc :basis basis
+                 :deps-map (tools.deps/resolve-deps basis nil))))
     (catch Exception e
       (abort (->> ["Error reading your deps file. Make sure"
                    deps

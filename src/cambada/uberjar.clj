@@ -125,7 +125,7 @@
    and a seq of path strings. For `:mvn` the values represent jar files.
    For `:deps` the values represent directory locations on the file system."
   [{:keys [deps-map]}]
-  (->> (tools.deps/resolve-deps deps-map nil)
+  (->> deps-map
        vals
        (utils/group-by+ :deps/manifest :paths (partial reduce into []))))
 
@@ -180,7 +180,8 @@
 (defn apply! [{:keys [deps deps-map out] :as task}]
   (jar/apply! task)
   (let [filename (jar-utils/get-jar-filename task {:kind :uberjar})
-        {mvn-paths :mvn deps-paths :deps jar :jar} (get-deps-by-manifest task)
+        {mvn-paths :mvn deps-paths :deps jar :jar :as paths} (get-deps-by-manifest task)
+        _ (prn :paths paths)
         jars (into (or jar []) (cons (jar-utils/get-jar-filename task {:kind :jar}) mvn-paths))]
     (cli/info "Creating" filename)
     (with-open [out (-> filename

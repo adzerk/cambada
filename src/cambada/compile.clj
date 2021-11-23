@@ -1,7 +1,6 @@
 (ns cambada.compile
   (:gen-class)
-  (:require [cambada.clean :as clean]
-            [cambada.cli :as cli]
+  (:require [cambada.cli :as cli]
             [cambada.utils :as utils]
             [clojure.java.io :as io]
             [clojure.string :as string]
@@ -17,19 +16,18 @@
           cli/base-cli-options))
 
 (defn ^:private aot-namespaces
-  [{:keys [aot deps-map] :as task}]
+  [{:keys [aot basis] :as task}]
   (if (= (first aot) 'all)
-    (->> (:paths deps-map)
+    (->> (:paths basis)
          (map io/file)
          (map ns.find/find-namespaces-in-dir)
          flatten)
     aot))
 
-(defn apply! [{:keys [deps-map out] dirty-build :dirty-build :as task}]
-  (when-not dirty-build
-    (clean/apply! task))
+(defn apply! [{:keys [deps-map out] :as task}]
   (let [target (utils/compiled-classes-path out)
         aot-ns (aot-namespaces task)]
+    (prn :aot-ns aot-ns)
     (utils/mkdirs target)
     (cli/info "Creating" target)
     (binding [*compile-path* target]
